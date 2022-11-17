@@ -41,7 +41,8 @@ const subParams = {
     version: 1, // Int - 1 is standard
     type: 0, // 0 = percentage, 1 = fixed
     amount: 50, // Int - If percentage, amount/1000 / if fixed, base units
-    publicKey // PEM encoded string
+    publicKey, // PEM encoded string
+    previous: '' // string (optional) - base64 of subject of JWT token for upstream relay
 };
 
 // Do the token
