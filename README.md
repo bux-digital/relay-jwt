@@ -5,7 +5,7 @@ Tools for constructing and parsing the subject field for the Badger Relay Server
 
 ```bash
 $ npm install jsonwebtoken
-$ npm install relayjwt
+$ npm install relay-jwt
 ```
 
 Installing ```jsonwebtoken``` will install ```jwa```, which is a necessary requirement for this module.
