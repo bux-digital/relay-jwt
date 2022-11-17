@@ -85,7 +85,9 @@ const decodeSubject = function (subjectB64, verify) {
     const publicKey = `${findArr[0]}${findArr[2]}` // BEGIN PUBLIC KEY
         + `${chunkString(pkDec64, 64).join("\n")}` // PUBLIC KEY
         + `${findArr[2]}${findArr[1]}${findArr[2]}`; // END PUBLIC KEY
-    verify(msgDecBuf, sig64, publicKey);
+    const verified = verify(msgDecBuf, sig64, publicKey);
+    if (!verified)
+        throw new Error("Invalid signature in subject");
     return {
         version,
         type,
