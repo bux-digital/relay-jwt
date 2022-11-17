@@ -27,9 +27,7 @@ const encodeSubject = function (params, privateKey, sign) {
     const pubKeyCat = `${findArr[0]}${findArr[2]}`
         + `${chunkString(pubKeyLine, 64).join("\n")}`
         + `${findArr[2]}${findArr[1]}${findArr[2]}}`;
-    console.log(pubKeyCat);
     const pubKeyBuf = Buffer.from(pubKeyLine, 'base64');
-    console.log(pubKeyLine, pubKeyBuf.byteLength);
     const pkLenBuf = Buffer.allocUnsafe(1);
     pkLenBuf.writeUInt8(pubKeyBuf.byteLength);
     const prefixBuf = Buffer.allocUnsafe(2);
@@ -51,7 +49,6 @@ const encodeSubject = function (params, privateKey, sign) {
     const sigBuf = Buffer.from(signature, "base64");
     const sigLenBuf = Buffer.alloc(2);
     sigLenBuf.writeUInt16BE(sigBuf.byteLength);
-    console.log("signature", signature); // base64
 
     // Add signature to subject
     return Buffer.concat([
