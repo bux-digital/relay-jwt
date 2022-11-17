@@ -1,9 +1,14 @@
 {
   "name": "relay-jwt",
+  "description": "BUX Relay JWT tools",
   "version": "1.0.0",
   "author": "Vin Armani <vin@vinarmani.com>",
   "main": "index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bux-digital/relay-jwt.git"
+  },
   "dependencies": {
     "n64": "^0.2.10"
   }
