@@ -1,6 +1,7 @@
 {
   "name": "relay-jwt",
   "version": "1.0.0",
+  "author": "Vin Armani <vin@vinarmani.com>",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
