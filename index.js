@@ -1,5 +1,10 @@
 const {U64} = require('n64');
 
+const isBase64 = function (str) {
+    const base64regex = /^([0-9a-zA-Z+/]{4})*(([0-9a-zA-Z+/]{2}==)|([0-9a-zA-Z+/]{3}=))?$/;
+    return base64regex.test(str);
+}
+
 const replaceBulk = function ( str, findArray, replaceArray ){
     var i, regex = [], map = {}; 
     for( i=0; i<findArray.length; i++ ){ 
@@ -97,7 +102,69 @@ const decodeSubject = function (subjectB64, verify) {
     };
 }
 
+const decodeSubjectChain = function (subjectB64, verify) {
+    const decodedSub = decodeSubject(subjectB64, verify);
+
+    const decodedChain = [decodedSub];
+    let previous = decodedSub.previous;
+    while (previous.length > 0) {
+        const decodedPrev = decodeSubject(previous, verify);
+        decodedChain.push(decodedPrev);
+        previous = decodedPrev.previous;
+    }
+    return decodedChain;
+}
+
+const calculateGross = function (netAmount, subjectChain, decimals) {
+    if (!Number.isInteger(decimals))
+        throw new Error ("Must specify decimal precision (int) for token / currency");
+    if (!Number.isInteger(netAmount))
+        throw new Error ("Invalid netAmount. Must be a number");
+    if (!Array.isArray(subjectChain))
+        throw new Error ("Subject chain array must be provided")
+
+    for (let i = 0; i < subjectChain.length; i++) {
+        const cert = subjectChain[i];
+        if (cert.type === 0) {
+            // calculate by percentage (amount value is x/1000)
+            netAmount += netAmount * (cert.amount / 1000);
+        } else if (cert.type === 1) {
+            netAmount += cert.amount / (10 ** decimals);
+        } else {
+            throw new Error("Invalid type in certificate");
+        }
+    }
+
+    return netAmount;
+}
+
+const calculateNet = function (grossAmount, subjectChain, decimals) {
+    if (!Number.isInteger(decimals))
+        throw new Error ("Must specify decimal precision (int) for token / currency");
+    if (!Number.isInteger(grossAmount))
+        throw new Error ("Invalid grossAmount. Must be a number");
+    if (!Array.isArray(subjectChain))
+        throw new Error ("Subject chain array must be provided")
+
+    for (let i = subjectChain.length - 1; i >= 0; i--) {
+        const cert = subjectChain[i];
+        if (cert.type === 0) {
+            // calculate by percentage (amount value is x/1000)
+            grossAmount = grossAmount / (1 + (cert.amount / 1000));
+        } else if (cert.type === 1) {
+            grossAmount -= cert.amount / (10 ** decimals);
+        } else {
+            throw new Error("Invalid type in certificate");
+        }
+    }
+
+    return grossAmount.toFixed(decimals);
+}
+
 module.exports = {
     encodeSubject,
-    decodeSubject
+    decodeSubject,
+    decodeSubjectChain,
+    calculateGross,
+    calculateNet
 }

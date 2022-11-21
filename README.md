@@ -18,48 +18,89 @@ Example:
 const jwt = require('jsonwebtoken');
 const jwa = require('jwa');
 const crypto = require('crypto');
-const { decodeSubject, encodeSubject } = require("relay-jwt");
-
-// Generate a new random keypair in PEM format
 const { 
-    publicKey, 
-    privateKey 
-} = crypto.generateKeyPairSync( 'ec', {
-    namedCurve: 'secp256k1',
-    'publicKeyEncoding': {
-        'type': 'spki',
-        'format': 'pem'
-    },
-    'privateKeyEncoding': {
-        'type': 'pkcs8',
-        'format': 'pem'
-    }
-});
+    decodeSubjectChain,
+    encodeSubject, 
+    calculateGross,
+    calculateNet
+} = require("relay-jwt");
 
-// Create base fee subject
-const subParams = {
-    version: 1, // Int - 1 is standard
-    type: 0, // 0 = percentage, 1 = fixed
-    amount: 50, // Int - If percentage, amount/1000 / if fixed, base units
-    publicKey, // PEM encoded string
-    previous: '' // string (optional) - base64 of subject of JWT token for upstream relay
-};
-
-// Do the token
 // Set algorithm
 const algorithm = 'ES256';
 // create jwa object
 const ecdsa = jwa(algorithm);
+
+// Parameters for the relays, with Relay 0 at the 0 index
+const chainParams = [
+    {
+        type: 0,
+        amount: 50
+    },
+    {
+        type: 1,
+        amount: 5000
+    },
+    {
+        type: 0,
+        amount: 80
+    }
+];
+
+let subject = '';
+let privateKey;
+let publicKey;
+
+for (let i = 0; i < chainParams.length; i++ ) {
+// Generate a new random keypair in PEM format
+    const keyPair = crypto.generateKeyPairSync( 'ec', {
+        namedCurve: 'secp256k1',
+        'publicKeyEncoding': {
+            'type': 'spki',
+            'format': 'pem'
+        },
+        'privateKeyEncoding': {
+            'type': 'pkcs8',
+            'format': 'pem'
+        }
+    });
+
+    privateKey = keyPair.privateKey;
+    publicKey = keyPair.publicKey;
+
+    // Create base fee subject
+    const subParams = {
+        version: 1, // Int - 1 is standard
+        type: chainParams[i].type, // 0 = percentage, 1 = fixed
+        amount: chainParams[i].amount, // Int - If percentage, amount/1000 / if fixed, base units
+        publicKey, // PEM encoded string
+        previous: subject
+    };
+
+    subject = encodeSubject(subParams, privateKey, ecdsa.sign).toString("base64");
+}
+
+// Do the token
 // generate token with relay jwt subject
 const token = jwt.sign({}, privateKey, { 
     algorithm,
-    subject: encodeSubject(subParams, privateKey, ecdsa.sign).toString("base64")
+    subject
 });
 // decode token
-const decoded = jwt.verify(token, publicKey);
-// decode subject. Returns same object as subParams
-// Throws error if doesn't verify
-const decodedSub = decodeSubject(decoded.sub, ecdsa.verify);
+const decoded = jwt.decode(token)
+// Decode subject chain. Returns array of subParams objects as above
+// Index 0 represents first fee to be added (first relay server to receive request)
+// Last index represents BUX API (Relay 0)
+const decodedChain = decodeSubjectChain(decoded.sub, ecdsa.verify);
+console.log("decodedChain", decodedChain);
 // First public key in subject must match public key for token
-console.log("public keys match?", publicKey === decodedSub.publicKey);
+const verified = jwt.verify(token, decodedChain[0].publicKey);
+console.log("jwt verified?", verified ? true : false);
+
+// Do some fee calculations
+// Calculate the total amount paid if the merchant submits 10
+const gross = calculateGross(10, decodedChain, 4);
+console.log("gross", gross);
+// Calculate the amount the merchant must submit for the customer to pay 10
+const net = calculateNet(10, decodedChain, 4);
+console.log("net", net);
 ```
