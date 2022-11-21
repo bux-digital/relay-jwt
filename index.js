@@ -158,7 +158,7 @@ const calculateNet = function (grossAmount, subjectChain, decimals) {
         }
     }
 
-    return grossAmount.toFixed(decimals);
+    return Number(grossAmount.toFixed(decimals));
 }
 
 module.exports = {
