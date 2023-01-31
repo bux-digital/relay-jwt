@@ -118,7 +118,7 @@ const decodeSubjectChain = function (subjectB64, verify) {
 const calculateGross = function (netAmount, subjectChain, decimals) {
     if (!Number.isInteger(decimals))
         throw new Error ("Must specify decimal precision (int) for token / currency");
-    if (!Number.isInteger(netAmount))
+    if (!(typeof netAmount === 'number'))
         throw new Error ("Invalid netAmount. Must be a number");
     if (!Array.isArray(subjectChain))
         throw new Error ("Subject chain array must be provided")
@@ -135,13 +135,13 @@ const calculateGross = function (netAmount, subjectChain, decimals) {
         }
     }
 
-    return netAmount;
+    return Number(netAmount.toFixed(decimals));
 }
 
 const calculateNet = function (grossAmount, subjectChain, decimals) {
     if (!Number.isInteger(decimals))
         throw new Error ("Must specify decimal precision (int) for token / currency");
-    if (!Number.isInteger(grossAmount))
+    if (!(typeof grossAmount === 'number'))
         throw new Error ("Invalid grossAmount. Must be a number");
     if (!Array.isArray(subjectChain))
         throw new Error ("Subject chain array must be provided")
